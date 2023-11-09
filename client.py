@@ -6,7 +6,6 @@ import shutil
 file_map = {}
 
 sep = '<sep>'
-repdir = '/repository'
 class Client:
 
     def __init__(self, command):
@@ -14,9 +13,12 @@ class Client:
         self.arrCommand = command.strip().split(' ')
     def checkvalidcommand(self):
         if self.arrCommand[0] == 'publish' and len(self.arrCommand) != 3:
-            print('Command invalid -0')
-        elif len(self.arrCommand) != 2:
-            print('Command invalid -1')
+            print('Command invalid - publish')
+            return False
+        elif self.arrCommand[0] == 'fetch' and len(self.arrCommand) != 2:
+            print('Command invalid - fetch')
+            return False
+        return True
     def handlerFile(self, dircheck):
         lname = self.arrCommand[1]
         fname = self.arrCommand[2]
@@ -33,17 +35,20 @@ class Client:
             os.mkdir('repository')
         elif not os.path.exists(lname):
             print('the lname is a invalid path')
-        else:
+            return
+        
         # check fname valid before sending to the server!
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sendSeg = 'publish' + sep + fname # merge sender
-                sock.connect((host, port))
-                sock.send(sendSeg.encode())
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sendSeg = 'publish' + sep + fname # merge sender
+            sock.connect((host, port))
+            sock.send(sendSeg.encode())
                 
-                status = sock.recv(1024).decode()
-                if status == '200': 
-                    self.handlerFile(dircheck)
-                    print('success - fetch!')
+            status = sock.recv(1024).decode()
+            print(status)
+            if status == '200': 
+                self.handlerFile(dircheck)
+                print('success - fetch!')
+
     def fetch(self, host, port):
         pass
 if __name__ == '__main__':
@@ -57,15 +62,14 @@ if __name__ == '__main__':
     while True:
         command = input('[-] Command: ')
         server=Client(command)
-        if command.startswith("publish"):
-            server.checkvalidcommand()
+        if command.startswith("publish") and server.checkvalidcommand():
             server.publish(host, port)
-        elif command.startswith('fetch'):
-            server.checkvalidcommand()
+        elif command.startswith('fetch') and server.checkvalidcommand():
             server.fetch(host, port)
         elif command.strip() == 'out':
+            shutil.rmtree('repository')
             sys.exit(1)
         else:
-            print('Command invalid -3')
+            print('Command invalid - no command')
 
-    print('have problem')
+    
