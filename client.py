@@ -56,7 +56,7 @@ if __name__ == '__main__':
     port = 12345
     print('[+] This is system for sharing file:')
     print('\t[-] Command list:')
-    print('\t. publich <lname> <fname>')
+    print('\t. publish <lname> <fname>')
     print('\t. fetch <fname>')
     print('\t. out')
     while True:

@@ -1,10 +1,10 @@
 import socket
 import threading
 import sys
-import time
-
+import os
 sep = '<sep>'
 file_map = {}  # ele follows the form: {fname: (addr, port)}
+host_conn = []
 exit_event = threading.Event()  # Shared event to signal all threads to exit
 
 class MyServer:
@@ -36,16 +36,24 @@ class MyServer:
         send_seg = conn.recv(1024).decode()
         arr_send = send_seg.strip().split(sep)
 
+        if addr[0] not in host_conn:
+            host_conn.append(addr[0])
+
         # print connect info
-        print(f"\n{conn} -- {addr}")
+        print(f"\n {addr[0]} is connected")
         # check command
         if arr_send[0] == 'publish':
             file_map[arr_send[1]] = addr[0]
-            print(f"\n--{addr}--")
+            print(f"Current file map: {file_map}")
             conn.send('200'.encode())
         elif arr_send[0] == 'fetch':
             pass
-
+    def ping(self, host):
+        # white list - security
+        if host in host_conn:
+            os.system(f"ping -c 3 {host}")
+        else:
+            print("Host isn't connected or host error syntax ipv4!")
     def stop(self):
         exit_event.set()
 
@@ -69,8 +77,12 @@ if __name__ == "__main__":
         command = input('[-] Type a command (or "out" to exit): ')
 
         if command.startswith('discover'):
-            print('you type the discover command')
-        elif command == 'out':
+            if len(command.split()) != 2:
+                continue
+            else:
+                hostping = command.split()[1] 
+                server.ping(hostping)
+        elif command in ['out','exit','close']:
             server.stop()
             p2.join()
             sys.exit(0)
