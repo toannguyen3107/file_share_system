@@ -8,10 +8,9 @@ host_conn = []
 exit_event = threading.Event()  # Shared event to signal all threads to exit
 
 class MyServer:
-    def __init__(self, host, port, max_threads):
+    def __init__(self, host, port):
         self.host = host
         self.port = port
-        self.max_threads = max_threads
 
     def start(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -28,7 +27,7 @@ class MyServer:
                         break
                     else:
                         continue
-
+                
                 connection_thread = threading.Thread(target=self.handle_connection, args=(conn, addr))
                 connection_thread.start()
 
@@ -47,7 +46,12 @@ class MyServer:
             print(f"Current file map: {file_map}")
             conn.send('200'.encode())
         elif arr_send[0] == 'fetch':
-            pass
+            fname = arr_send[1]
+            host = '-1' #default '-1'
+            if file_map[fname]:
+                conn.send(f"fetch{sep}{file_map[fname]}".encode())
+            else:
+                conn.send(f"fetch{sep}404{sep}File Not Found!")
     def ping(self, host):
         # white list - security
         if host in host_conn:
@@ -60,9 +64,10 @@ class MyServer:
 if __name__ == "__main__":
     host = '0.0.0.0'
     port = 12345
-    max_threads = 10
 
-    server = MyServer(host, port, max_threads)
+    port_self = 10000
+
+    server = MyServer(host, port)
     p2 = threading.Thread(target=server.start)
 
     p2.start()
@@ -76,12 +81,26 @@ if __name__ == "__main__":
     while True:
         command = input('[-] Type a command (or "out" to exit): ')
 
-        if command.startswith('discover'):
+        if command.startswith('ping'):
             if len(command.split()) != 2:
                 continue
             else:
                 hostping = command.split()[1] 
                 server.ping(hostping)
+        elif command.startswith('discover'):
+            host_discover = command.split(' ')[1]
+            print(host_discover) #test
+            if host_discover in host_conn:
+                discover_message = "discover"
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                    print(host_discover, port_self,sep="--") #test
+                    sock.connect((host_discover, port_self))
+                    sock.send(discover_message.encode())
+
+                    mess = sock.recv(1024).decode()
+                    mess_split = mess.split(sep)
+                    if mess_split[0] == "discover":
+                        print(f"\n-----------\nList fname from {host_discover}: ",mess_split[1])
         elif command in ['out','exit','close']:
             server.stop()
             p2.join()
