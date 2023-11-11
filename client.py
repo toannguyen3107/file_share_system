@@ -140,7 +140,7 @@ class Client:
 
 
 if __name__ == '__main__':
-    host = '192.168.1.7' #the server hostname
+    host = input('Type the server hostname: ') #the server hostname
     port = 12345 # port connect with server 
 
     host_self = '0.0.0.0' # listen hostname
@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
     print('[+] This is a system for sharing files:')
     print('\t[-] Command list:')
-    print('\t. publish <lname> <fname>')
+    print('\t. publish <lname:link to file> <fname>')
     print('\t. fetch <fname>')
     print('\t. out')
 
