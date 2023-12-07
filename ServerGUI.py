@@ -41,6 +41,18 @@ class MyServer:
         send_seg = conn.recv(1024).decode()
         arr_send = send_seg.strip().split(sep)
 
+        if arr_send[0] == 'update':
+            file_list = ""
+            for file in file_map:
+                if (file_map[file] != addr[0]):
+                    file_list += file + sep
+            if (file_list != ""):
+                print(file_list)
+                conn.send(f"update{sep}{file_list}".encode())
+            else: 
+                conn.send("empty".encode())
+            return
+        
         if addr[0] not in host_conn:
             host_conn.append(addr[0])
             self.connected_peers.append(addr[0])
@@ -52,15 +64,21 @@ class MyServer:
         # check command
         if arr_send[0] == 'publish':
             # add to file list
-            self.file_list += str(arr_send[2]) + sep
-            print(self.file_list)
+            # self.file_list += str(arr_send[1]) + sep
+            # print(self.file_list)
             #
             file_map[arr_send[1]] = addr[0]
             file_map_text = f"Current file map: {file_map}"
             print(file_map_text)
+            # send file list to peer
+            file_list = ""
+            for file in file_map:
+                if (file_map[file] != addr[0]):
+                    file_list += file + sep
+            ###
             self.terminal_text.insert(tk.END, file_map_text + '\n')
             conn.send('200'.encode())
-            conn.send(self.file_list.encode())
+            conn.send(file_list.encode())
             
         elif arr_send[0] == 'fetch':
             fname = arr_send[1]
@@ -70,10 +88,14 @@ class MyServer:
             else:
                 conn.send(f"fetch{sep}404{sep}File Not Found!".encode())
         elif arr_send[0] == 'discover':
-            print("hello")
-            if (self.file_list != ""):
-                print(self.file_list)
-                conn.send(f"discover{sep}{self.file_list}".encode())
+            file_list = ""
+            for file in file_map:
+                if (file_map[file] != addr[0]):
+                    file_list += file + sep
+            # print(file_list)
+            if (file_list != ""):
+                print(file_list)
+                conn.send(f"discover{sep}{file_list}".encode())
     
     def ping(self, host):
         # white list - security

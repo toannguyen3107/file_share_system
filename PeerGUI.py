@@ -60,15 +60,16 @@ class PeerGUI:
                 if status == '200':
                     messagebox.showinfo("Success", "File published successfully.")
                     file_list = sock.recv(1024).decode()
-                    file_list = file_list.strip().split(sep)
-                    # Reset file in peer
-                    self.file = []
-                    ###
-                    for file in file_list:
-                        if (file != ''):
-                            self.file.append(file)
-                            
-                    self.update_file_list()
+                    if file_list != "":
+                        file_list = file_list.strip().split(sep)
+                        # Reset file in peer
+                        self.file = []
+                        ###
+                        for file in file_list:
+                            if (file != ''):
+                                self.file.append(file)
+                                
+                        self.update_file_list()
                 else:
                     messagebox.showerror("Error", "Failed to publish file.")
                 sock.close()
@@ -105,6 +106,22 @@ class PeerGUI:
                 sock.close()
 
     def update_file_list(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((self.server_host, self.server_port))
+            msg = "update" + sep
+            sock.send(msg.encode())
+            msg_recv = sock.recv(1024).decode()
+            
+            if (msg_recv == "empty"): 
+                return
+            
+            mess_split = msg_recv.strip().split(sep)
+            file_list = mess_split[1:]
+            self.file = []
+            for file in file_list:
+                if (file != ''):
+                    self.file.append(file)
+                    
         self.file_listbox.delete(0, tk.END)
         for file in self.file:
             self.file_listbox.insert(tk.END, file)
@@ -118,7 +135,6 @@ def discover_and_update(peer_gui):
         sock.bind(('0.0.0.0', peer_gui.port_self))
         sock.listen(5)
         sock.settimeout(1)
-        print("hello")
         discover_message = "discover" + sep
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_sock:
             server_sock.connect((peer_gui.server_host, peer_gui.server_port))
